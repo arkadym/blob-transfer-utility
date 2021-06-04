@@ -1,0 +1,418 @@
+﻿<Window 
+xmlns:Controls="clr-namespace:System.Windows.Controls;assembly=System.Windows.Controls.Input.Toolkit"  
+xmlns:my="http://schemas.microsoft.com/winfx/2006/xaml/presentation" 
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:System="clr-namespace:System;assembly=mscorlib" 
+		xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+		xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+    xmlns:vsm="clr-namespace:System.Windows;assembly=PresentationFramework"
+		xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity" xmlns:ei="http://schemas.microsoft.com/expression/2010/interactions" 
+		mc:Ignorable="d" 
+		x:Class="BlobTransferUtility.MainWindow"
+        Title="Blob Transfer Utility (beta)" Height="797.368" Width="684.211" WindowState="Maximized" WindowStartupLocation="CenterScreen" Icon="icon.ico">
+    <Grid Background="Black">
+    	<vsm:VisualStateManager.VisualStateGroups>
+    		<vsm:VisualStateGroup x:Name="HelpVisualStateGroup">
+    			<vsm:VisualStateGroup.Transitions>
+    				<vsm:VisualTransition GeneratedDuration="0:0:0.1"/>
+    			</vsm:VisualStateGroup.Transitions>
+    			<vsm:VisualState x:Name="ShowHelpVisualState"/>
+    			<vsm:VisualState x:Name="HideHelpVisualState">
+    				<Storyboard>
+    					<ObjectAnimationUsingKeyFrames Storyboard.TargetProperty="(UIElement.Visibility)" Storyboard.TargetName="Help1">
+    						<DiscreteObjectKeyFrame KeyTime="0" Value="{x:Static Visibility.Visible}"/>
+    						<DiscreteObjectKeyFrame KeyTime="0:0:0.4" Value="{x:Static Visibility.Visible}"/>
+    						<DiscreteObjectKeyFrame KeyTime="0:0:0.4" Value="{x:Static Visibility.Collapsed}"/>
+    					</ObjectAnimationUsingKeyFrames>
+    					<ObjectAnimationUsingKeyFrames Storyboard.TargetProperty="(UIElement.Visibility)" Storyboard.TargetName="Help2">
+    						<DiscreteObjectKeyFrame KeyTime="0" Value="{x:Static Visibility.Visible}"/>
+    						<DiscreteObjectKeyFrame KeyTime="0:0:0.4" Value="{x:Static Visibility.Visible}"/>
+    						<DiscreteObjectKeyFrame KeyTime="0:0:0.4" Value="{x:Static Visibility.Collapsed}"/>
+    					</ObjectAnimationUsingKeyFrames>
+    					<ObjectAnimationUsingKeyFrames Storyboard.TargetProperty="(UIElement.Visibility)" Storyboard.TargetName="Help3">
+    						<DiscreteObjectKeyFrame KeyTime="0" Value="{x:Static Visibility.Visible}"/>
+    						<DiscreteObjectKeyFrame KeyTime="0:0:0.4" Value="{x:Static Visibility.Visible}"/>
+    						<DiscreteObjectKeyFrame KeyTime="0:0:0.4" Value="{x:Static Visibility.Collapsed}"/>
+    					</ObjectAnimationUsingKeyFrames>
+    					<DoubleAnimationUsingKeyFrames Storyboard.TargetProperty="(UIElement.Opacity)" Storyboard.TargetName="Help1">
+    						<EasingDoubleKeyFrame KeyTime="0" Value="1"/>
+    						<EasingDoubleKeyFrame KeyTime="0:0:0.4" Value="0"/>
+    					</DoubleAnimationUsingKeyFrames>
+    					<DoubleAnimationUsingKeyFrames Storyboard.TargetProperty="(UIElement.Opacity)" Storyboard.TargetName="Help2">
+    						<EasingDoubleKeyFrame KeyTime="0" Value="1"/>
+    						<EasingDoubleKeyFrame KeyTime="0:0:0.4" Value="0"/>
+    					</DoubleAnimationUsingKeyFrames>
+    					<DoubleAnimationUsingKeyFrames Storyboard.TargetProperty="(UIElement.Opacity)" Storyboard.TargetName="Help3">
+    						<EasingDoubleKeyFrame KeyTime="0" Value="1"/>
+    						<EasingDoubleKeyFrame KeyTime="0:0:0.4" Value="0"/>
+    					</DoubleAnimationUsingKeyFrames>
+    				</Storyboard>
+    			</vsm:VisualState>
+    		</vsm:VisualStateGroup>
+    	</vsm:VisualStateManager.VisualStateGroups>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <StackPanel Margin="4">
+            <Expander Header="Account &amp; Container" IsExpanded="True">
+                <Grid >
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Grid Grid.Row="0" >
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="60"/>
+                            <ColumnDefinition/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Account" Grid.Column="0"/>
+                        <TextBox Margin="0 0 4 0" Grid.Column="1" Text="{Binding DefaultStorageAccount, Mode=TwoWay}"/>
+                        <TextBlock Text="Key" Grid.Column="2"/>
+                        <TextBox Margin="4 0 0 0" Grid.Column="3" Text="{Binding DefaultStorageAccountKey, Mode=TwoWay}"/>
+                    </Grid>
+                    <Grid Grid.Row="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="60"/>
+                            <ColumnDefinition/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Container" Grid.Column="0" />
+                        <TextBox Grid.Column="1" Text="{Binding DefaultContainerName, Mode=TwoWay}" />
+                        <Button Content="Pick container" Grid.Column="2"  Margin="4 0 0 0" Command="{Binding PickContainerCommand}" />
+                    </Grid>
+                </Grid>
+            </Expander>
+        </StackPanel>
+        <Grid x:Name="Help1" Grid.Row="0" Margin="4">
+            <Border Background="#FF595959" CornerRadius="3">
+                <StackPanel Orientation="Vertical" Margin="3,0,3,3">
+                    <TextBlock Text="Step 1" FontSize="29.333" />
+                    <TextBlock Text="Inform your Storage Account, Storage Account Key and Container name." FontWeight="Bold" />
+                    <TextBlock Text="You can list and select a container clicking in &quot;Pick container&quot;" />
+                </StackPanel>
+            </Border>
+        </Grid>
+        <TabControl Grid.Row="1" Margin="4">
+            <TabItem Header="Upload">
+                <Grid >
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="1*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Grid Grid.Row="0" Margin="0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="{Binding SelectedFolder}" Margin="4"/>
+                        <StackPanel HorizontalAlignment="Right" Orientation="Horizontal" Margin="4">
+                            <Button Content="Pick folder" Command="{Binding SelectFolderAndFilesCommand}" />
+                            <Button Content="Pick files" Command="{Binding SelectFilesCommand}" Margin="8 0 0 0"/>
+                        </StackPanel>
+                    </Grid>
+                    <my:DataGrid x:Name="dataGrid" Grid.Row="1" ItemsSource="{Binding Files}" AutoGenerateColumns="False" EnableColumnVirtualization="True" IsReadOnly="True" Background="#FF595959" Foreground="White" CanUserReorderColumns="False" CanUserResizeRows="False" HeadersVisibility="Column" RowBackground="#FF595959" HorizontalGridLinesBrush="{x:Null}" VerticalGridLinesBrush="#FF333333" BorderBrush="{x:Null}"  >
+							<my:DataGrid.Columns>
+                            <my:DataGridTextColumn Binding="{Binding RelativeToFolder}" Header="Folder" Width="*"/>
+                            <my:DataGridTextColumn Binding="{Binding Name}" Header="File" Width="*"/>
+                            <my:DataGridTextColumn Binding="{Binding Size}" Header="Size" Width="60"/>
+                        </my:DataGrid.Columns>
+                    </my:DataGrid>
+                    <StackPanel Grid.Row="2">
+                        <CheckBox Margin="4 4 0 4" Content="Use the first relative folder name as the container name" IsChecked="{Binding UseFirstLevelAsContainerName, Mode=TwoWay}"/>
+                        <Expander Header="Properties">
+                            <Grid Margin="4">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Name format" Grid.Row="0" Grid.Column="0"/>
+                                <TextBox Margin="4 0 0 0" Grid.Row="0" Grid.Column="1" Text="{Binding DefaultBlobNameFormat, Mode=TwoWay}"/>
+                                <TextBlock Text="Content-type" Grid.Row="1" Grid.Column="0"/>
+                                <TextBox Margin="4 0 0 0" Grid.Row="1" Grid.Column="1" Text="{Binding DefaultContentType, Mode=TwoWay}"/>
+                            </Grid>
+                        </Expander>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="4">
+                            <Button Content="Exclude selected" Command="{Binding RemoveSelectedFilesCommand}" CommandParameter="{Binding SelectedItems, ElementName=dataGrid}"/>
+                            <Button Content="Add all to queue" Margin="8 0 0 0" Command="{Binding AddUploadToQueueCommand}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+            <TabItem Header="Download">
+                <Grid >
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="1*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Grid Grid.Row="0" Margin="0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="{Binding DefaultContainerName}" Margin="4"/>
+                        <StackPanel HorizontalAlignment="Right" Orientation="Horizontal" Margin="4">
+                            <Button Content="List blobs" Command="{Binding ListBlobsCommand}"/>
+                        </StackPanel>
+                    </Grid>
+                    <my:DataGrid x:Name="dataGridBlobs" Grid.Row="1" ItemsSource="{Binding Blobs}" AutoGenerateColumns="False" EnableColumnVirtualization="True" IsReadOnly="True" Background="#FF595959" Foreground="White" CanUserReorderColumns="False" CanUserResizeRows="False" HeadersVisibility="Column" RowBackground="#FF595959" HorizontalGridLinesBrush="{x:Null}" VerticalGridLinesBrush="#FF333333" BorderBrush="{x:Null}" >
+                        <my:DataGrid.Columns>
+                            <my:DataGridTextColumn Binding="{Binding Container}" Header="Container" Width="60"/>
+                            <my:DataGridTextColumn Binding="{Binding BlobName}" Header="Name" Width="*"/>
+                            <my:DataGridTextColumn Binding="{Binding Size}" Header="Size" Width="60"/>
+                        </my:DataGrid.Columns>
+                    </my:DataGrid>
+                    <StackPanel Grid.Row="2">
+                        <Expander Header="Properties" Visibility="Collapsed">
+                            <Grid Margin="4">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Name format" Grid.Row="3" Grid.Column="0"/>
+                                <TextBox Margin="4 0 0 0" Grid.Row="3" Grid.Column="1" Text="{Binding DefaultBlobNameFormat, Mode=TwoWay}"/>
+                                <TextBlock Text="Content-type" Grid.Row="4" Grid.Column="0"/>
+                                <TextBox Margin="4 0 0 0" Grid.Row="4" Grid.Column="1" Text="{Binding DefaultContentType, Mode=TwoWay}"/>
+                            </Grid>
+                        </Expander>
+                        <Grid Grid.Row="0" Margin="4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{Binding SelectedFolder}" />
+                            <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+                                <Button Content="Pick folder" Command="{Binding SelectFolderCommand}" />
+                            </StackPanel>
+                        </Grid>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="4">
+                            <Button Content="Exclude selected" Command="{Binding RemoveSelectedBlobsCommand}" CommandParameter="{Binding SelectedItems, ElementName=dataGridBlobs}"/>
+                            <Button Content="Add all to queue" Margin="8 0 0 0" Command="{Binding AddDownloadToQueueCommand}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+        </TabControl>
+        <Grid x:Name="Help2" Grid.Row="1" Margin="4">
+        	<Border Background="#FF595959" CornerRadius="3">
+        		<StackPanel Orientation="Vertical" Margin="3,0,3,3">
+        			<TextBlock Text="Step 2" FontSize="29.333" />
+        			<TextBlock Text="Select an operation:" />
+        			<StackPanel Orientation="Vertical" Margin="16,0,0,0">
+        				<TextBlock Text="Upload" Margin="0,8,0,0" FontWeight="Bold" />
+        				<StackPanel Orientation="Vertical" Margin="16,0,0,0">
+        					<TextBlock Text="Pick a whole folder or specific files to upload." FontWeight="Bold" />
+        					<TextBlock Text="(Optional) Exclude the files you don't want to upload clicking in &quot;Exclude selected&quot;." />
+        					<TextBlock Text="(Optional) Set a custom format to name the blobs." />
+        					<TextBlock Text="(Optional) Set the content-type." />
+        					<TextBlock Text="Add the upload operations to the queue clicking in &quot;Add all to queue&quot;." FontWeight="Bold" />
+        				</StackPanel>
+        			</StackPanel>
+        			<StackPanel Orientation="Vertical" Margin="16,0,0,0">
+        				<TextBlock Text="Download" Margin="0,8,0,0" FontWeight="Bold" />
+        				<StackPanel Orientation="Vertical" Margin="16,0,0,0">
+        					<TextBlock Text="List all blobs in the container." FontWeight="Bold" />
+        					<TextBlock Text="(Optional) Exclude the blobs you don't want to download clicking in &quot;Exclude selected&quot;." />
+        					<TextBlock Text="Select the folder you want to download the blobs to clicking in &quot;Pick folder&quot;" FontWeight="Bold" />
+        					<TextBlock Text="Add the download operations to the queue clicking in &quot;Add all to queue&quot;." FontWeight="Bold" />
+        				</StackPanel>
+        			</StackPanel>
+        		</StackPanel>
+        	</Border>
+        </Grid>
+        <GridSplitter Grid.Row="2" HorizontalAlignment="Stretch" Height="4" VerticalAlignment="Top" Background="#FF333333" />
+        <TabControl  Grid.Row="2" Margin="4 8 4 4">
+            <TabItem Header="Work">
+                <Grid >
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1*"/>
+                        <ColumnDefinition Width="1*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="1*"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="Queue" />
+                        </StackPanel>
+                        <my:DataGrid x:Name="dataGrid1" Grid.Row="1" ItemsSource="{Binding WorkerManager.Queue}" AutoGenerateColumns="False" EnableColumnVirtualization="True" IsReadOnly="True" Background="#FF595959" Foreground="White" CanUserReorderColumns="False" CanUserResizeRows="False" HeadersVisibility="Column" RowBackground="#FF595959" HorizontalGridLinesBrush="{x:Null}" VerticalGridLinesBrush="#FF333333" BorderBrush="{x:Null}" >
+                            <my:DataGrid.Columns>
+                                <my:DataGridTextColumn Binding="{Binding JobType}" Header="Type" Width="40"/>
+                                <my:DataGridTextColumn Binding="{Binding Container}" Header="Container" Width="60"/>
+                                <my:DataGridTextColumn Binding="{Binding BlobName}" Header="Blob" Width="*"/>
+                                <my:DataGridTextColumn Binding="{Binding File.FullFilePath}" Header="File" Width="*"/>
+                                <my:DataGridTextColumn Binding="{Binding Size}" Header="Size" Width="60"/>
+                            </my:DataGrid.Columns>
+                        </my:DataGrid>
+                        <StackPanel Grid.Row="2" Margin="0 4 0 4" Orientation="Horizontal" HorizontalAlignment="Right" >
+                            <TextBlock Text="{Binding WorkerManager.QueueCount}" />
+                            <TextBlock Text=" item(s), " />
+                            <TextBlock Text="{Binding WorkerManager.TotalQueueSize}" />
+                            <TextBlock Text=". Time remaining: " />
+                            <TextBlock Text="{Binding WorkerManager.QueueRemainingTime, StringFormat=\{0:g\}}" />
+                        </StackPanel>
+                        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0 4 0 4">
+                            <Button Content="Exclude selected" Command="{Binding RemoveSelectedQueueCommand}" CommandParameter="{Binding SelectedItems, ElementName=dataGrid1}" />
+                            <Button Content="Clear" Margin="8 0 0 0" Command="{Binding ClearQueueCommand}"/>
+                        </StackPanel>
+                    </Grid>
+                    <GridSplitter Width="4" Margin="4 0 0 0" Grid.Column="1" VerticalAlignment="Stretch" HorizontalAlignment="Left" Background="#FF333333" />
+                    <Grid Grid.Column="1" Margin="12 0 0 0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Workers" />
+                            <Slider Grid.Column="1" Margin="16 0 0 0" Minimum="0" Maximum="10" SmallChange="1" LargeChange="1" Value="{Binding WorkerManager.MaxWorkers, Mode=TwoWay}"/>
+                            <TextBlock Grid.Column="2" Margin="4 0 4 0" Text="{Binding WorkerManager.MaxWorkers}"/>
+                        </Grid>
+                        <my:DataGrid x:Name="dataGridWorkers" Grid.Row="1" ItemsSource="{Binding WorkerManager.Workers}" AutoGenerateColumns="False" EnableColumnVirtualization="True" IsReadOnly="True" Background="#FF595959" Foreground="White" CanUserReorderColumns="False" CanUserResizeRows="False" HeadersVisibility="Column" RowBackground="#FF595959" HorizontalGridLinesBrush="{x:Null}" VerticalGridLinesBrush="#FF333333" BorderBrush="{x:Null}" >
+                            <my:DataGrid.Columns>
+                                <my:DataGridTextColumn Binding="{Binding BlobJob.JobType}" Header="Type" Width="40"/>
+                                <my:DataGridTextColumn Binding="{Binding BlobJob.Container}" Header="Container" Width="60"/>
+                                <my:DataGridTextColumn Binding="{Binding BlobJob.BlobName}" Header="Blob" Width="*"/>
+                                <my:DataGridTextColumn Binding="{Binding BlobJob.File.FullFilePath}" Header="File" Width="*"/>
+                                <my:DataGridTextColumn Binding="{Binding TimeRemaining, StringFormat=\{0:g\}}" Header="Time Remaining" Width="100"/>
+                                <my:DataGridTextColumn Binding="{Binding Transfered}" Header="Transfered" Width="100"/>
+                                <my:DataGridTextColumn Binding="{Binding Size}" Header="Size" Width="60"/>
+                                <my:DataGridTextColumn Binding="{Binding Speed}" Header="Speed" Width="60"/>
+                            </my:DataGrid.Columns>
+                        </my:DataGrid>
+                        <StackPanel Grid.Row="2" Margin="0 4 0 4" Orientation="Horizontal" HorizontalAlignment="Right" >
+                            <TextBlock Text="{Binding WorkerManager.WorkersCount}" />
+                            <TextBlock Text=" worker(s), " />
+                            <TextBlock Text="{Binding WorkerManager.TotalTransfered}" />
+                            <TextBlock Text=" of " />
+                            <TextBlock Text="{Binding WorkerManager.TotalToTransfer}" />
+                            <TextBlock Text=" at " />
+                            <TextBlock Text="{Binding WorkerManager.AverageSpeed}" />
+                            <TextBlock Text=". Time remaining: " />
+                            <TextBlock Text="{Binding WorkerManager.RemainingTime, StringFormat=\{0:g\}}" />
+                        </StackPanel>
+                        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0 4 0 4">
+                            <Button Content="Cancel selected" Command="{Binding CancelWorkerCommand}" CommandParameter="{Binding SelectedItems, ElementName=dataGridWorkers}"/>
+                            <Button Content="Enqueue selected" Margin="8 0 0 0"  Command="{Binding EnqueueWorkerCommand}" CommandParameter="{Binding SelectedItems, ElementName=dataGridWorkers}" />
+                        </StackPanel>
+                    </Grid>
+                </Grid>
+            </TabItem>
+            <TabItem Header="History">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <my:DataGrid Grid.RowSpan="2" x:Name="dataGridWorkersHistory" ItemsSource="{Binding WorkerManager.WorkersHistory}" AutoGenerateColumns="False" EnableColumnVirtualization="True" IsReadOnly="True" Background="#FF595959" Foreground="White" CanUserReorderColumns="False" CanUserResizeRows="False" HeadersVisibility="Column" RowBackground="#FF595959" HorizontalGridLinesBrush="{x:Null}" VerticalGridLinesBrush="#FF333333" BorderBrush="{x:Null}" SelectionMode="Single">
+                        <my:DataGrid.Columns>
+                            <my:DataGridTextColumn Binding="{Binding BlobJob.Container}" Header="Container" Width="60"/>
+                            <my:DataGridTextColumn Binding="{Binding BlobJob.BlobName}" Header="Blob" Width="*"/>
+                            <my:DataGridTextColumn Binding="{Binding BlobJob.File.FullFilePath}" Header="File" Width="*"/>
+                            <my:DataGridTextColumn Binding="{Binding TimeRemaining, StringFormat=\{0:g\}}" Header="Time Remaining" Width="100"/>
+                            <my:DataGridTextColumn Binding="{Binding Transfered}" Header="Transfered" Width="100"/>
+                            <my:DataGridTextColumn Binding="{Binding Size}" Header="Size" Width="60"/>
+                            <my:DataGridTextColumn Binding="{Binding Speed}" Header="Speed" Width="60"/>
+                            <my:DataGridTextColumn Binding="{Binding Message}" Header="Result" Width="50"/>
+                        </my:DataGrid.Columns>
+                    </my:DataGrid>
+                    <Grid Grid.Row="1" Grid.RowSpan="2">
+                        <Border VerticalAlignment="Bottom" Background="#FF333333" CornerRadius="8" >
+                            <TextBox IsReadOnly="True" Text="{Binding SelectedItem.ErrorMessage, ElementName=dataGridWorkersHistory}" HorizontalAlignment="Stretch" BorderThickness="0" Background="{x:Null}" BorderBrush="{x:Null}" Margin="4" VerticalScrollBarVisibility="Auto" />
+                        </Border>
+                    </Grid>
+                </Grid>
+            </TabItem>
+            <TabItem Header="Error Log">
+            	<Grid>
+            		<TextBox x:Name="errorTextBox" IsReadOnly="True" HorizontalAlignment="Stretch" BorderThickness="0" Background="{x:Null}" BorderBrush="{x:Null}" Margin="4" VerticalScrollBarVisibility="Auto" />
+            	</Grid>
+            </TabItem>
+        </TabControl>
+        <Grid x:Name="Help3" Grid.Row="2" Margin="4">
+        	<Border Background="#FF595959" CornerRadius="3">
+        		<StackPanel Orientation="Vertical" Margin="3,0,3,3">
+        			<TextBlock Text="Step 3" FontSize="29.333" />
+        			<StackPanel Orientation="Vertical">
+        				<TextBlock Text="Work" FontWeight="Bold" />
+        				<StackPanel Orientation="Vertical" Margin="16,0,0,0">
+        					<TextBlock Text="Queue" FontWeight="Bold" />
+        					<StackPanel Orientation="Vertical" Margin="16,0,0,0">
+        						<TextBlock Text="(Note) The queue will list all the operations that you have requested." />
+        						<TextBlock Text="(Optional) Cancel queued operations clicking in &quot;Exclude selected&quot;." />
+        						<TextBlock Text="(Optional) Cancel all queued operations clicking in &quot;Clear&quot;." />
+        					</StackPanel>
+        				</StackPanel>
+        				<StackPanel Orientation="Vertical" Margin="16,0,0,0">
+        					<TextBlock Text="Workers" FontWeight="Bold" />
+        					<StackPanel Orientation="Vertical" Margin="16,0,0,0">
+        						<TextBlock Text="Important! Alocate Workers sliding the &quot;Workers Slider&quot; to the right." FontWeight="Bold" />
+        						<TextBlock Text="(Optional) Cancel the working operations clicking in &quot;Cancel selected&quot;." />
+        						<TextBlock Text="(Optional) Move the operation back to the end of the queue clicking in &quot;Enqueue selected&quot;." />
+        						<TextBlock Text="(Note) Workers work in parallel. Files larger than 1MB will be splited in parts that will also be transfered in parallel." />
+        					</StackPanel>
+        				</StackPanel>
+        			</StackPanel>
+        			<StackPanel Orientation="Vertical" Margin="0">
+        				<TextBlock Text="Work History" FontWeight="Bold" />
+        				<StackPanel Orientation="Vertical" Margin="16,0,0,0">
+        					<TextBlock Text="(Note) Check the history of all operations." />
+        				</StackPanel>
+        			</StackPanel>
+        			<StackPanel Orientation="Vertical" Margin="0">
+        				<TextBlock Text="Error Log" FontWeight="Bold" />
+        				<StackPanel Orientation="Vertical" Margin="16,0,0,0">
+        					<TextBlock Text="(Note) Check the error log with detailed information." />
+        				</StackPanel>
+        			</StackPanel>
+        		</StackPanel>
+        	</Border>
+        	<TextBlock Text="Turn the help off ▼" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,4,4" />
+        </Grid>
+        <Grid Grid.Row="3" Margin="4">
+        	<Border Background="#FF595959" CornerRadius="3">
+        		<Grid Margin="3">
+        			<TextBlock Margin="0,0,149.084,0" HorizontalAlignment="Left"><Run Text="Blob Transfer Utility by Vitor Ciaramella, 2013. Sources and more info at "/><Run Text=" "/><Hyperlink Command="{Binding OpenLinkCommand}" CommandParameter="http://bit.ly/blobtransfer"><Run Text="http://bit.ly/blobtransfer"/></Hyperlink></TextBlock>
+        			<CheckBox Content="Help" HorizontalAlignment="Right" VerticalAlignment="Top" IsChecked="True">
+        				<i:Interaction.Triggers>
+        					<i:EventTrigger EventName="Checked">
+        						<ei:GoToStateAction StateName="ShowHelpVisualState"/>
+        					</i:EventTrigger>
+        					<i:EventTrigger EventName="Unchecked">
+        						<ei:GoToStateAction StateName="HideHelpVisualState"/>
+        					</i:EventTrigger>
+        				</i:Interaction.Triggers>
+        			</CheckBox>
+        		</Grid>
+        	</Border>
+        </Grid>
+    </Grid>
+</Window>
