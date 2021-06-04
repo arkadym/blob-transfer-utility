@@ -89,7 +89,7 @@ xmlns:my="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                 </Grid>
             </Expander>
         </StackPanel>
-        <Grid x:Name="Help1" Grid.Row="0" Margin="4">
+        <Grid x:Name="Help1" Grid.Row="0" Margin="4" Visibility="Collapsed">
             <Border Background="#FF595959" CornerRadius="3">
                 <StackPanel Orientation="Vertical" Margin="3,0,3,3">
                     <TextBlock Text="Step 1" FontSize="29.333" />
@@ -211,7 +211,7 @@ xmlns:my="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                 </Grid>
             </TabItem>
         </TabControl>
-        <Grid x:Name="Help2" Grid.Row="1" Margin="4">
+        <Grid x:Name="Help2" Grid.Row="1" Margin="4" Visibility="Collapsed">
         	<Border Background="#FF595959" CornerRadius="3">
         		<StackPanel Orientation="Vertical" Margin="3,0,3,3">
         			<TextBlock Text="Step 2" FontSize="29.333" />
@@ -349,15 +349,19 @@ xmlns:my="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                             <TextBox IsReadOnly="True" Text="{Binding SelectedItem.ErrorMessage, ElementName=dataGridWorkersHistory}" HorizontalAlignment="Stretch" BorderThickness="0" Background="{x:Null}" BorderBrush="{x:Null}" Margin="4" VerticalScrollBarVisibility="Auto" />
                         </Border>
                     </Grid>
+                    <Button x:Name="saveHistoryButton" HorizontalAlignment="Right" VerticalAlignment="Bottom" Width="80" Height="20" Grid.RowSpan="2"
+                            Padding="0" Margin="3" Content="Save" Command="{Binding SaveHistoryCommand}" CommandParameter="{Binding ElementName=dataGridWorkersHistory}" />
                 </Grid>
             </TabItem>
             <TabItem Header="Error Log">
             	<Grid>
             		<TextBox x:Name="errorTextBox" IsReadOnly="True" HorizontalAlignment="Stretch" BorderThickness="0" Background="{x:Null}" BorderBrush="{x:Null}" Margin="4" VerticalScrollBarVisibility="Auto" />
-            	</Grid>
+                    <Button x:Name="saveErrorsButton" HorizontalAlignment="Right" VerticalAlignment="Bottom" Width="80" Height="20" 
+                            Padding="0" Margin="3" Content="Save" Command="{Binding SaveLogCommand}" CommandParameter="{Binding ElementName=errorTextBox,Path=Text}" />
+                </Grid>
             </TabItem>
         </TabControl>
-        <Grid x:Name="Help3" Grid.Row="2" Margin="4">
+        <Grid x:Name="Help3" Grid.Row="2" Margin="4" Visibility="Collapsed">
         	<Border Background="#FF595959" CornerRadius="3">
         		<StackPanel Orientation="Vertical" Margin="3,0,3,3">
         			<TextBlock Text="Step 3" FontSize="29.333" />
@@ -401,7 +405,7 @@ xmlns:my="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         	<Border Background="#FF595959" CornerRadius="3">
         		<Grid Margin="3">
         			<TextBlock Margin="0,0,149.084,0" HorizontalAlignment="Left"><Run Text="Blob Transfer Utility by Vitor Ciaramella, 2013. Sources and more info at "/><Run Text=" "/><Hyperlink Command="{Binding OpenLinkCommand}" CommandParameter="http://bit.ly/blobtransfer"><Run Text="http://bit.ly/blobtransfer"/></Hyperlink></TextBlock>
-        			<CheckBox Content="Help" HorizontalAlignment="Right" VerticalAlignment="Top" IsChecked="True">
+                    <CheckBox Content="Help" HorizontalAlignment="Right" VerticalAlignment="Top" IsChecked="False" Visibility="Collapsed">
         				<i:Interaction.Triggers>
         					<i:EventTrigger EventName="Checked">
         						<ei:GoToStateAction StateName="ShowHelpVisualState"/>

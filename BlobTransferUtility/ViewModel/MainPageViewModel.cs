@@ -12,6 +12,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 
 namespace BlobTransferUtility.ViewModel
@@ -105,6 +106,66 @@ namespace BlobTransferUtility.ViewModel
                 if (_ListBlobsCommand == null)
                     _ListBlobsCommand = new ActionCommand(OnListBlobs);
                 return _ListBlobsCommand;
+            }
+        }
+
+        private ICommand _SaveLogCommand;
+        public ICommand SaveLogCommand
+        {
+            get
+            {
+                if (_SaveLogCommand == null)
+                    _SaveLogCommand = new ActionCommand(SaveLog);
+                return _SaveLogCommand;
+            }
+        }
+
+        private ICommand _SaveHistoryCommand;
+        public ICommand SaveHistoryCommand
+        {
+            get
+            {
+                if (_SaveHistoryCommand == null)
+                    _SaveHistoryCommand = new ActionCommand(SaveHistory);
+                return _SaveHistoryCommand;
+            }
+        }
+        
+        private void SaveHistory(object param)
+        {
+            var dialog = new SaveFileDialog();
+            var dialogResult = dialog.ShowDialog(Application.Current.MainWindow);
+            if (dialogResult == true)
+            {
+                var dataGrid = param as DataGrid;
+                var history = WorkerManager.WorkersHistory;
+                var lines = new List<string>();
+                lines.Add("\"Container\",\"Blob\",\"File\",\"StartTime\",\"Elapsed\",\"Transfered\",\"Size\",\"Speed\",\"Result\",\"Message\"");
+                foreach (var worker in history)
+                {
+                    TimeSpan elapsed = TimeSpan.FromSeconds(0);
+                    try
+                    {
+                        elapsed = (worker.Finish - worker.Start);
+                    }
+                    catch { }
+                    lines.Add("\"" + string.Join("\",\"", new string[] { 
+                        worker.BlobJob.Container, worker.BlobJob.BlobName, worker.BlobJob.File.FullFilePath, 
+                        worker.Start.ToString(), elapsed.ToString(), worker.Transfered, worker.Size, worker.Speed, worker.Message,
+                        worker.ErrorMessage
+                    }) + "\"");
+                }
+                System.IO.File.WriteAllText(dialog.FileName, string.Join(Environment.NewLine, lines));
+            }
+        }
+
+        private void SaveLog(object param)
+        {
+            var dialog = new SaveFileDialog();
+            var dialogResult = dialog.ShowDialog(Application.Current.MainWindow);
+            if (dialogResult == true)
+            {
+                System.IO.File.WriteAllText(dialog.FileName, param as string);
             }
         }
 
