@@ -1,31 +1,76 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-	<Product Id="*" Name="Blob Transfer Utility" Language="1033" Version="1.0.0.0" Manufacturer="Arkady Ltd" 
-           UpgradeCode="bfb5a949-d615-4112-b4dc-54a58f30ab6c">
-		<Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
+	<Product Id="*" 
+           Name="Blob Transfer Utility" 
+           Language="1033" 
+           Version="1.0.2" 
+           Manufacturer="Arkady Ltd" 
+           UpgradeCode="bfb5a949-d615-4112-b4dc-54a58f30ab6c"
+           >
+		<Package Id="*" InstallerVersion="200" Compressed="yes" InstallScope="perMachine"
+             Description="Azure blob transfer utility allow upload and download recursively files from local to Azure blob storage."
+             Comments="(C) "/>
 
-		<MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
-		<MediaTemplate />
+    <Condition Message="You need to be an administrator to install this product.">
+      Privileged
+    </Condition>
+
+    <MajorUpgrade AllowDowngrades="yes" 
+                  IgnoreRemoveFailure="yes" />
+		<!--<MediaTemplate />-->
+    <Media Id="1" Cabinet="BlobTransferUtility.cab" EmbedCab="yes" />
+    <Icon Id="AppIcon" SourceFile="$(var.BlobTransferUtility.TargetDir)\icon.ico" />
+    <Property Id="ARPPRODUCTICON" Value="AppIcon" />
+    
+    <!--<Property Id="WIXUI_INSTALLDIR" Value="INSTALLDIR" />-->
+    <Property Id="ApplicationFolderName" Value="My Application Folder" />
+    <Property Id="WixAppFolder" Value="WixPerMachineFolder" />   
+
+    <UI Id="MyWixUI">
+      <UIRef Id="WixUI_Advanced" />
+    </UI>
+    
+    <WixVariable Id="WixUILicenseRtf" Value="$(var.BlobTransferUtility.TargetDir)\License.rtf" />
 
 		<Feature Id="ProductFeature" Title="SetupProject1" Level="1">
-			<ComponentGroupRef Id="ProductComponents" />
+			<ComponentGroupRef Id="ProgramFilesComponents" />
+      <ComponentGroupRef Id="ProgramMenuComponents"/>
 		</Feature>
-	</Product>
+    
+  </Product>
 
 	<Fragment>
 		<Directory Id="TARGETDIR" Name="SourceDir">
 			<Directory Id="ProgramFilesFolder">
-				<Directory Id="INSTALLFOLDER" Name="SetupProject1" />
+        <Directory Id="ManufacturerFolder" Name="[Manufacturer]">
+          <Directory Id="INSTALLFOLDER" Name="[ProductName]"/>
+        </Directory>
 			</Directory>
+      <Directory Id="ProgramMenuFolder" Name="Programs">
+        <Directory Id="ProgramMenuDir" Name="[ProductName]"/>
+      </Directory>
 		</Directory>
 	</Fragment>
 
 	<Fragment>
-		<ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
-			<!-- TODO: Remove the comments around this Component element and the ComponentRef below in order to add resources to this installer. -->
-			<!-- <Component Id="ProductComponent"> -->
-				<!-- TODO: Insert files, registry keys, and other resources here. -->
-			<!-- </Component> -->
+		<ComponentGroup Id="ProgramFilesComponents" Directory="INSTALLFOLDER">
+			 <Component Id="ProductComponent" Guid="A2B5D7D7-1696-439D-94FA-58CB0725003D">
+         <File Id="MainExe" Name="BlobTransferUtility.exe" Source="$(var.BlobTransferUtility.TargetDir)\BlobTransferUtility.exe" />
+         <File Id="MainConfig" Name="BlobTransferUtility.exe.config" Source="$(var.BlobTransferUtility.TargetDir)\BlobTransferUtility.exe.config"/>
+         <File Id="MainPdb" Name="BlobTransferUtility.pdb" Source="$(var.BlobTransferUtility.TargetDir)\BlobTransferUtility.pdb" />
+         <File Id="Microsoft.Expression.Interactions.dll" Name="Microsoft.Expression.Interactions.dll" Source="$(var.BlobTransferUtility.TargetDir)\Microsoft.Expression.Interactions.dll"/>
+         <File Id="Microsoft.WindowsAzure.Configuration.dll" Name="Microsoft.WindowsAzure.Configuration.dll" Source="$(var.BlobTransferUtility.TargetDir)\Microsoft.WindowsAzure.Configuration.dll" />
+         <File Id="Microsoft.WindowsAzure.Storage.dll" Name="Microsoft.WindowsAzure.Storage.dll" Source="$(var.BlobTransferUtility.TargetDir)\Microsoft.WindowsAzure.Storage.dll" />
+         <File Id="Microsoft.WindowsAzure.StorageClient.dll" Name="Microsoft.WindowsAzure.StorageClient.dll" Source="$(var.BlobTransferUtility.TargetDir)\Microsoft.WindowsAzure.StorageClient.dll" />
+         <File Id="System.Windows.Interactivity.dll" Name="System.Windows.Interactivity.dll" Source="$(var.BlobTransferUtility.TargetDir)\System.Windows.Interactivity.dll" />
+			 </Component>
 		</ComponentGroup>
+    <ComponentGroup Id="ProgramMenuComponents" Directory="ProgramMenuDir">
+      <Component Id="ProgramMenuDir" Guid="0D645BF3-86EB-4C8C-846C-571F62E6A062">
+        <Shortcut Id="MainExe" Name="Blob Transfer Utility" Target="[INSTALLFOLDER]\BlobTransferUtility.exe" WorkingDirectory="INSTALLFOLDER" />
+        <RemoveFolder Id="ProgramMenuDir" On="uninstall" />
+        <RegistryValue Root="HKCU" Key="Software\[Manufacturer]\[ProductName]" Type="string" Value="" KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
 	</Fragment>
 </Wix>
