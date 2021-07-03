@@ -3,7 +3,7 @@
 	<Product Id="*" 
            Name="Blob Transfer Utility" 
            Language="1033" 
-           Version="1.0.2" 
+           Version="1.0.1" 
            Manufacturer="Arkady Ltd" 
            UpgradeCode="bfb5a949-d615-4112-b4dc-54a58f30ab6c"
            >
@@ -11,12 +11,7 @@
              Description="Azure blob transfer utility allow upload and download recursively files from local to Azure blob storage."
              Comments="(C) "/>
 
-    <Condition Message="You need to be an administrator to install this product.">
-      Privileged
-    </Condition>
-
-    <MajorUpgrade AllowDowngrades="yes" 
-                  IgnoreRemoveFailure="yes" />
+    <MajorUpgrade AllowDowngrades="yes" />
 		<!--<MediaTemplate />-->
     <Media Id="1" Cabinet="BlobTransferUtility.cab" EmbedCab="yes" />
     <Icon Id="AppIcon" SourceFile="$(var.BlobTransferUtility.TargetDir)\icon.ico" />
@@ -27,7 +22,7 @@
     <Property Id="WixAppFolder" Value="WixPerMachineFolder" />   
 
     <UI Id="MyWixUI">
-      <UIRef Id="WixUI_Advanced" />
+      <UIRef Id="WixUI_Minimal" />
     </UI>
     
     <WixVariable Id="WixUILicenseRtf" Value="$(var.BlobTransferUtility.TargetDir)\License.rtf" />

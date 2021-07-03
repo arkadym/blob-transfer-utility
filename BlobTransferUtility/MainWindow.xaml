@@ -11,7 +11,7 @@ xmlns:my="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 		mc:Ignorable="d" 
 		x:Class="BlobTransferUtility.MainWindow"
         Title="Blob Transfer Utility (beta)" Height="797.368" Width="684.211" WindowState="Maximized" WindowStartupLocation="CenterScreen" 
-    Icon="{StaticResource AppIcon}">
+        Icon="{StaticResource AppIcon}">
     <Grid Background="Black">
     	<vsm:VisualStateManager.VisualStateGroups>
     		<vsm:VisualStateGroup x:Name="HelpVisualStateGroup">
