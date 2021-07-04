@@ -68,6 +68,17 @@ namespace BlobTransferUtility
             {
                 if (!string.IsNullOrEmpty(SelectedFolder))
                 {
+                    var tmpFilename = System.IO.Path.GetTempFileName();
+
+                    var relativeToFolder = SelectedFolder;
+                    if (KeepTopFolderName)
+                    {
+                        relativeToFolder = System.IO.Path.GetDirectoryName(relativeToFolder.Substring(0, relativeToFolder.Length - 1));
+                        if (string.IsNullOrEmpty(relativeToFolder)) // mostly user selected drive root, e.g. C:\ - cannot preserve it
+                            relativeToFolder = SelectedFolder;
+                        else if (!relativeToFolder.EndsWith(System.IO.Path.DirectorySeparatorChar.ToString()))
+                            relativeToFolder += System.IO.Path.DirectorySeparatorChar;
+                    }
                     if (!SelectedFolder.EndsWith(System.IO.Path.DirectorySeparatorChar.ToString()))
                         SelectedFolder += System.IO.Path.DirectorySeparatorChar;
 
@@ -83,10 +94,31 @@ namespace BlobTransferUtility
                             var fileInfo = new FileInfo(file);
                             files.Add(new Model.File()
                             {
-                                Name = file.Substring(SelectedFolder.Length),
+                                Name = file.Substring(relativeToFolder.Length),
                                 FullFilePath = file,
                                 SizeInBytes = fileInfo.Length,
-                                RelativeToFolder = SelectedFolder,
+                                RelativeToFolder = relativeToFolder
+                            });
+                        }
+                        foreach (var folder in Directory.GetDirectories(SelectedFolder, "*", searchOption))
+                        {
+                            var dirInfo = new DirectoryInfo(folder);
+                            files.Add(new Model.Folder()
+                            {
+                                Name = folder.Substring(relativeToFolder.Length),
+                                FullFilePath = tmpFilename,
+                                SizeInBytes = 0,
+                                RelativeToFolder = relativeToFolder
+                            });
+                        }
+                        if (KeepTopFolderName)
+                        {
+                            files.Add(new Model.Folder()
+                            {
+                                Name = SelectedFolder.Substring(relativeToFolder.Length, SelectedFolder.Length - relativeToFolder.Length - 1),
+                                FullFilePath = tmpFilename,
+                                SizeInBytes = 0,
+                                RelativeToFolder = relativeToFolder
                             });
                         }
                     }
@@ -127,5 +159,12 @@ namespace BlobTransferUtility
         }
         public static readonly DependencyProperty IncludeSubfoldersProperty =
             DependencyProperty.Register("IncludeSubfolders", typeof(bool), typeof(PickFolderDialog), new PropertyMetadata(false));
+        public bool KeepTopFolderName
+        {
+            get { return (bool)GetValue(KeepTopFolderNameProperty); }
+            set { SetValue(KeepTopFolderNameProperty, value); }
+        }
+        public static readonly DependencyProperty KeepTopFolderNameProperty =
+            DependencyProperty.Register("KeepTopFolderName", typeof(bool), typeof(PickFolderDialog), new PropertyMetadata(false));
     }
 }

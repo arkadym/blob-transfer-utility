@@ -92,6 +92,7 @@
     </ApplicationDefinition>
     <Compile Include="Model\Blob.cs" />
     <Compile Include="Model\Container.cs" />
+    <Compile Include="Model\Folder.cs" />
     <Compile Include="Model\SizeUtil.cs" />
     <Compile Include="PickFolderDialog.xaml.cs">
       <DependentUpon>PickFolderDialog.xaml</DependentUpon>

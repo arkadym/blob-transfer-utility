@@ -9,6 +9,7 @@ using System.Collections.ObjectModel;
 using System.Configuration;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -31,12 +32,17 @@ namespace BlobTransferUtility.ViewModel
                 ExecuteOnUI(()=>OnError(this, new OnErrorEventArgs() { Message = message }));
         }
 
+        public string Title { get; }
+
         public MainPageViewModel()
         {
             Files = new ObservableCollection<BlobTransferUtility.Model.File>();
             Blobs = new ObservableCollection<BlobTransferUtility.Model.Blob>();
             WorkerManager = new WorkerManager();
             WorkerManager.OnError += OnErrorHandler;
+
+            var version = Assembly.GetEntryAssembly().GetName().Version.ToString(2);
+            Title = $"Blob Transfer Utility (beta) - {version}";
         }
 
         void OnErrorHandler(object sender, OnErrorEventArgs e)
@@ -523,12 +529,13 @@ namespace BlobTransferUtility.ViewModel
                         (fileFolders.Length > 1) && UseFirstLevelAsContainerName ? 
                         fileFolders[0] : DefaultContainerName;
 
+                    var isFolder = file is Folder;
                     WorkerManager.Queue.Add(new BlobJob()
                     {
                         JobType = BlobJobType.Upload,
                         File = file,
                         SizeInBytes = file.SizeInBytes,
-                        BlobName = string.Format(DefaultBlobNameFormat, file.Name).Replace("\\","/"),
+                        BlobName = string.Format(DefaultBlobNameFormat, file.Name).Replace("\\","/") + (isFolder ? "/" : ""),
                         Container = containerName.ToLower(),
                         ContentType = DefaultContentType,
                         StorageAccount = DefaultStorageAccount,
