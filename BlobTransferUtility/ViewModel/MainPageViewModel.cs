@@ -1,7 +1,7 @@
-﻿using BlobTransferUtility.Model;
+﻿using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
+using BlobTransferUtility.Model;
 using Microsoft.Win32;
-using Microsoft.WindowsAzure;
-using Microsoft.WindowsAzure.StorageClient;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -185,27 +185,22 @@ namespace BlobTransferUtility.ViewModel
                 });
                 try
                 {
-                    var storageAccount = CloudStorageAccount.Parse(string.Format("DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1}", DefaultStorageAccount, DefaultStorageAccountKey));
-                    var blobClient = storageAccount.CreateCloudBlobClient();
-                    var containerReference = blobClient.GetContainerReference(DefaultContainerName);
+                    var connectionString = string.Format("DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1}", DefaultStorageAccount, DefaultStorageAccountKey);
+                    var containerReference = new BlobContainerClient(connectionString, DefaultContainerName);
+
                     var blobs = new List<Blob>();
-                    foreach (var blobItem in containerReference.ListBlobs(new BlobRequestOptions() {
-                         UseFlatBlobListing = true,
-                    }))
+
+                    foreach (var blobItem in containerReference.GetBlobs(BlobTraits.Metadata))
                     {
-                        if (blobItem is CloudBlob)
+                        blobs.Add(new Blob()
                         {
-                            var blob = blobItem as CloudBlob;
-                            blobs.Add(new Blob()
-                            {
-                                BlobName = blob.Name,
-                                Container = DefaultContainerName,
-                                ContentType = blob.Properties.ContentType,
-                                SizeInBytes = blob.Properties.Length,
-                                StorageAccount = DefaultStorageAccount,
-                                StorageAccountKey = DefaultStorageAccountKey,
-                            });
-                        }
+                            BlobName = blobItem.Name,
+                            Container = DefaultContainerName,
+                            ContentType = blobItem.Properties.ContentType,
+                            SizeInBytes = (double)blobItem.Properties.ContentLength,
+                            StorageAccount = DefaultStorageAccount,
+                            StorageAccountKey = DefaultStorageAccountKey,
+                        });
                     }
 
 
@@ -248,10 +243,11 @@ namespace BlobTransferUtility.ViewModel
                 {
                     try
                     {
-                        var storageAccount = CloudStorageAccount.Parse(string.Format("DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1}", DefaultStorageAccount, DefaultStorageAccountKey));
-                        var blobClient = storageAccount.CreateCloudBlobClient();
+                        var connectionString = string.Format("DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1}", DefaultStorageAccount, DefaultStorageAccountKey);
+                        var containerClient = new BlobServiceClient(connectionString);
+
                         var containers = new List<Container>();
-                        foreach (var container in blobClient.ListContainers())
+                        foreach (var container in containerClient.GetBlobContainers())
                         {
                             containers.Add(new Container()
                             {

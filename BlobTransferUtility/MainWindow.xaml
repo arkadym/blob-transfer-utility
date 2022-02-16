@@ -264,6 +264,7 @@ xmlns:my="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                                 <my:DataGridTextColumn Binding="{Binding BlobName}" Header="Blob" Width="*"/>
                                 <my:DataGridTextColumn Binding="{Binding File.FullFilePath}" Header="File" Width="*"/>
                                 <my:DataGridTextColumn Binding="{Binding Size}" Header="Size" Width="60"/>
+                                <my:DataGridTextColumn Binding="{Binding NextSchedule}" Header="Scheduled To" Width="80" />
                             </my:DataGrid.Columns>
                         </my:DataGrid>
                         <StackPanel Grid.Row="2" Margin="0 4 0 4" Orientation="Horizontal" HorizontalAlignment="Right" >

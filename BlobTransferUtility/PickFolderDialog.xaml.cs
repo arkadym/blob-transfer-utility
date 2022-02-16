@@ -68,6 +68,8 @@ namespace BlobTransferUtility
             {
                 if (!string.IsNullOrEmpty(SelectedFolder))
                 {
+                    if (!SelectedFolder.StartsWith("\\\\?\\"))
+                        SelectedFolder = "\\\\?\\" + SelectedFolder;
                     var tmpFilename = System.IO.Path.GetTempFileName();
 
                     var relativeToFolder = SelectedFolder;

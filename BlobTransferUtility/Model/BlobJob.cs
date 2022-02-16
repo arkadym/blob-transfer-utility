@@ -10,7 +10,7 @@ namespace BlobTransferUtility.Model
     { 
         Upload,
         Download,
-        SetMetadata,
+        //SetMetadata,
     }
 
     public class BlobJob : Blob
@@ -27,6 +27,18 @@ namespace BlobTransferUtility.Model
         {
             get { return _File; }
             set { SetField(ref _File, value, () => File); }
+        }
+
+        private DateTime _NextSchedule = DateTime.MinValue;
+        public DateTime NextSchedule
+        {
+            get => _NextSchedule;
+            set { SetField(ref _NextSchedule, value, () => NextSchedule); OnPropertyChanged(nameof(NextScheduleStr)); }
+        }
+
+        public string NextScheduleStr
+        {
+            get => _NextSchedule > DateTime.Now ? _NextSchedule.ToString("g") : "";
         }
     }
 }

@@ -89,6 +89,13 @@ namespace BlobTransferUtility.Model
             set { SetField(ref _Finish, value, () => Finish); }
         }
 
+        private bool _Success;
+        public bool Success
+        {
+            get => _Success;
+            set => SetField(ref _Success, value, () => Success);
+        }
+
         public System.Threading.Thread Thread { get; set; }
     }
 }

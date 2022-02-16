@@ -1,7 +1,7 @@
-﻿using BlobTransferUtility.Helpers;
+﻿using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
+using BlobTransferUtility.Helpers;
 using BlobTransferUtility.Model;
-using Microsoft.WindowsAzure;
-using Microsoft.WindowsAzure.StorageClient;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -153,7 +153,7 @@ namespace BlobTransferUtility.ViewModel
             try
             {
                 var availableWorkers = MaxWorkers - Workers.Count;
-                var jobs = Queue.Take(availableWorkers).ToList();
+                var jobs = Queue.Where(job => job.NextSchedule < DateTime.Now).Take(availableWorkers).ToList();
 
                 ExecuteOnUI(() =>
                 {
@@ -220,31 +220,25 @@ namespace BlobTransferUtility.ViewModel
                     worker.Start = DateTime.Now;
                     try
                     {
-                        var storageAccount = CloudStorageAccount.Parse(string.Format("DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1}", job.StorageAccount, job.StorageAccountKey));
-                        var blobClient = storageAccount.CreateCloudBlobClient();
+                        var connectionString = string.Format("DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1}", job.StorageAccount, job.StorageAccountKey);
 
-                        //var serviceProperties = blobClient.GetServiceProperties();
-                        //if (!"2012-02-12".Equals(serviceProperties.DefaultServiceVersion))
-                        //{
-                        //    serviceProperties.DefaultServiceVersion = "2012-02-12";
-                        //    blobClient.SetServiceProperties(serviceProperties);
-                        //}
-
-                        var containerReference = blobClient.GetContainerReference(job.Container);
-
-                        containerReference.CreateIfNotExist();
-                        var blobReference = containerReference.GetBlobReference(job.BlobName);
+                        var containerReference = new BlobContainerClient(connectionString, job.Container);
+                        
+                        containerReference.CreateIfNotExists();
+                        var blobReference = containerReference.GetBlobClient(job.BlobName);
+                        BlobProperties blobProperties = null;
 
                         try
                         {
-                            if (System.IO.File.Exists(job.File.FullFilePath))
+                            if (System.IO.File.Exists(job.File.FullFilePath) && blobReference.Exists())
                             {
-                                blobReference.FetchAttributes();
+                                blobProperties = blobReference.GetProperties().Value;
                                 var fileInfo = new FileInfo(job.File.FullFilePath);
-                                if (blobReference.Attributes.Properties.Length == fileInfo.Length)
+                                if (blobProperties.ContentLength == fileInfo.Length)
                                 {
                                     worker.Message = "Same file already exists";
                                     worker.Finish = DateTime.Now;
+                                    worker.Success = true;
                                     ArchiveWorker(worker);
                                     return;
                                 }
@@ -257,15 +251,11 @@ namespace BlobTransferUtility.ViewModel
                             var blobTransferHelper = new BlobTransferHelper();
                             blobTransferHelper.TransferCompleted += (sender, e) =>
                             {
-                                if (!string.IsNullOrEmpty(job.ContentType)
-                                    && (job.JobType == BlobJobType.Upload || job.JobType == BlobJobType.SetMetadata))
-                                {
-                                    blobReference.Properties.ContentType = job.ContentType;
-                                    blobReference.SetProperties();
-                                }
-
                                 worker.Message = "Success";
                                 worker.Finish = DateTime.Now;
+                                worker.Success = e.Error == null;
+                                if (!worker.Success)
+                                    worker.ErrorMessage = e.Error.Message;
                                 ArchiveWorker(worker);
                             };
                             blobTransferHelper.TransferProgressChanged += (sender, e) =>
@@ -279,7 +269,7 @@ namespace BlobTransferUtility.ViewModel
                             switch (job.JobType)
                             {
                                 case BlobJobType.Upload:
-                                    blobTransferHelper.UploadBlobAsync(blobReference, job.File.FullFilePath);
+                                    blobTransferHelper.UploadBlobAsync(blobReference, job.File.FullFilePath, job.ContentType);
                                     break;
                                 case BlobJobType.Download:
                                     Directory.CreateDirectory(Path.GetDirectoryName(job.File.FullFilePath));
@@ -292,25 +282,20 @@ namespace BlobTransferUtility.ViewModel
                             switch (job.JobType)
                             {
                                 case BlobJobType.Upload:
-                                    blobReference.UploadFile(job.File.FullFilePath);
+                                    var blobOptions = new BlobUploadOptions() { HttpHeaders = new BlobHttpHeaders() { ContentType = job.ContentType } };
+                                    blobReference.Upload(job.File.FullFilePath, blobOptions);
                                     break;
                                 case BlobJobType.Download:
                                     Directory.CreateDirectory(Path.GetDirectoryName(job.File.FullFilePath));
-                                    blobReference.DownloadToFile(job.File.FullFilePath);
+                                    blobReference.DownloadTo(job.File.FullFilePath);
                                     break;
-                            }
-
-                            if (!string.IsNullOrEmpty(job.ContentType)
-                                && (job.JobType == BlobJobType.Upload || job.JobType == BlobJobType.SetMetadata))
-                            {
-                                blobReference.Properties.ContentType = job.ContentType;
-                                blobReference.SetProperties();
                             }
 
                             worker.Message = "Success";
                             worker.TransferedInBytes = worker.SizeInBytes;
                             worker.Finish = DateTime.Now;
                             worker.SpeedInBytes = worker.SizeInBytes / (worker.Finish - worker.Start).TotalSeconds;
+                            worker.Success = true;
                             ArchiveWorker(worker);
                         }
                     }
@@ -325,6 +310,8 @@ namespace BlobTransferUtility.ViewModel
                         worker.Message = "Error";
                         worker.ErrorMessage = string.Format("{0}", e.ToString());
                         worker.Finish = DateTime.Now;
+                        worker.Success = false;
+                        worker.ErrorMessage = e.Message;
                         ArchiveWorker(worker);
                         OnJobError(job, e);
                     }
@@ -356,11 +343,18 @@ namespace BlobTransferUtility.ViewModel
         private void ArchiveWorker(Worker worker)
         {
             worker.Thread = null;
-            worker.BlobJob.StorageAccountKey = null;
+            if (worker.Success)
+                worker.BlobJob.StorageAccountKey = null;
+
             ExecuteOnUI(() =>
             {
                 Workers.Remove(worker);
                 WorkersHistory.Add(worker);
+                if (!worker.Success)
+                {
+                    worker.BlobJob.NextSchedule = DateTime.Now.AddMinutes(1);
+                    Queue.Add(worker.BlobJob);
+                }
             });
         }
 

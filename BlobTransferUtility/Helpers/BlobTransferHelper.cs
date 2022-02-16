@@ -5,19 +5,14 @@
 
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.ComponentModel;
 using System.Threading;
-using System.Runtime.Remoting.Messaging;
-using Microsoft.WindowsAzure;
-using Microsoft.WindowsAzure.StorageClient;
-using Microsoft.WindowsAzure.StorageClient.Protocol;
 using System.IO;
-using System.Net;
-using System.Security.Cryptography;
 using System.Linq;
-using Microsoft.WindowsAzure.Storage;
-using Microsoft.WindowsAzure.Storage.Blob;
+using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
+using Azure.Storage;
+using System.Threading.Tasks;
 
 namespace BlobTransferUtility.Helpers
 {
@@ -27,48 +22,24 @@ namespace BlobTransferUtility.Helpers
         public event AsyncCompletedEventHandler TransferCompleted;
         public event EventHandler<BlobTransferProgressChangedEventArgs> TransferProgressChanged;
 
-        // Public BlobTransfer properties
-        public TransferTypeEnum TransferType;
-
         // Private variables
-        private ICancellableAsyncResult asyncresult;
         private bool Working = false;
-        private object WorkingLock = new object();
-        private AsyncOperation asyncOp;
+        private CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
 
         // Used to calculate download speeds
         private Queue<long> timeQueue = new Queue<long>(200);
         private Queue<long> bytesQueue = new Queue<long>(200);
-        private DateTime updateTime = System.DateTime.Now;
 
         // Private BlobTransfer properties
         private string m_FileName;
-        private ICloudBlob m_Blob;
+        private BlobClient m_Blob;
 
-        // Helper function to allow Storage Client 1.7 (Microsoft.WindowsAzure.StorageClient) to utilize this class.
-        // Remove this function if only using Storage Client 2.0 (Microsoft.WindowsAzure.Storage).
-        public void UploadBlobAsync(Microsoft.WindowsAzure.StorageClient.CloudBlob blob, string LocalFile)
-        {
-            Microsoft.WindowsAzure.StorageCredentialsAccountAndKey account = blob.ServiceClient.Credentials as Microsoft.WindowsAzure.StorageCredentialsAccountAndKey;
-            ICloudBlob blob2 = new Microsoft.WindowsAzure.Storage.Blob.CloudBlockBlob(blob.Attributes.Uri, new Microsoft.WindowsAzure.Storage.Auth.StorageCredentials(blob.ServiceClient.Credentials.AccountName, account.Credentials.ExportBase64EncodedKey()));
-            UploadBlobAsync(blob2, LocalFile);
-        }
-
-        // Helper function to allow Storage Client 1.7 (Microsoft.WindowsAzure.StorageClient) to utilize this class.
-        // Remove this function if only using Storage Client 2.0 (Microsoft.WindowsAzure.Storage).
-        public void DownloadBlobAsync(Microsoft.WindowsAzure.StorageClient.CloudBlob blob, string LocalFile)
-        {
-            Microsoft.WindowsAzure.StorageCredentialsAccountAndKey account = blob.ServiceClient.Credentials as Microsoft.WindowsAzure.StorageCredentialsAccountAndKey;
-            ICloudBlob blob2 = new Microsoft.WindowsAzure.Storage.Blob.CloudBlockBlob(blob.Attributes.Uri, new Microsoft.WindowsAzure.Storage.Auth.StorageCredentials(blob.ServiceClient.Credentials.AccountName, account.Credentials.ExportBase64EncodedKey()));
-            DownloadBlobAsync(blob2, LocalFile);
-        }
-
-        public void UploadBlobAsync(ICloudBlob blob, string LocalFile)
+        public void UploadBlobAsync(BlobClient blobClient, string LocalFile, string contentType)
         {
             // The class currently stores state in class level variables so calling UploadBlobAsync or DownloadBlobAsync a second time will cause problems.
             // A better long term solution would be to better encapsulate the state, but the current solution works for the needs of my primary client.
             // Throw an exception if UploadBlobAsync or DownloadBlobAsync has already been called.
-            lock (WorkingLock)
+            lock (this)
             {
                 if (!Working)
                     Working = true;
@@ -77,13 +48,7 @@ namespace BlobTransferUtility.Helpers
             }
 
             // Attempt to open the file first so that we throw an exception before getting into the async work
-            using (FileStream fstemp = new FileStream(LocalFile, FileMode.Open, FileAccess.Read)) { }
-
-            // Create an async op in order to raise the events back to the client on the correct thread.
-            asyncOp = AsyncOperationManager.CreateOperation(blob);
-
-            TransferType = TransferTypeEnum.Upload;
-            m_Blob = blob;
+            m_Blob = blobClient;
             m_FileName = LocalFile;
 
             var file = new FileInfo(m_FileName);
@@ -93,16 +58,26 @@ namespace BlobTransferUtility.Helpers
             ProgressStream pstream = new ProgressStream(fs);
             pstream.ProgressChanged += pstream_ProgressChanged;
             pstream.SetLength(fileSize);
-            m_Blob.ServiceClient.ParallelOperationThreadCount = 10;
-            asyncresult = m_Blob.BeginUploadFromStream(pstream, BlobTransferCompletedCallback, new BlobTransferAsyncState(m_Blob, pstream));
+
+            //var options = new BlobUploadOptions()
+            //{
+            //    TransferOptions = new StorageTransferOptions
+            //    {
+            //        MaximumConcurrency = 10,
+            //        InitialTransferLength = 0x10000,
+            //        MaximumTransferSize = 0x10000
+            //    }
+            //};
+            var task = m_Blob.UploadAsync(pstream, /*options, */cancellationTokenSource.Token);
+            task.ContinueWith(t => BlobTransferCompleted(t, pstream));
         }
 
-        public void DownloadBlobAsync(ICloudBlob blob, string LocalFile)
+        public void DownloadBlobAsync(BlobClient blobClient, string LocalFile)
         {
             // The class currently stores state in class level variables so calling UploadBlobAsync or DownloadBlobAsync a second time will cause problems.
             // A better long term solution would be to better encapsulate the state, but the current solution works for the needs of my primary client.
             // Throw an exception if UploadBlobAsync or DownloadBlobAsync has already been called.
-            lock (WorkingLock)
+            lock (this)
             {
                 if (!Working)
                     Working = true;
@@ -110,21 +85,24 @@ namespace BlobTransferUtility.Helpers
                     throw new Exception("BlobTransfer already initiated. Create new BlobTransfer object to initiate a new file transfer.");
             }
 
-            // Create an async op in order to raise the events back to the client on the correct thread.
-            asyncOp = AsyncOperationManager.CreateOperation(blob);
-
-            TransferType = TransferTypeEnum.Download;
-            m_Blob = blob;
+            m_Blob = blobClient;
             m_FileName = LocalFile;
 
-            m_Blob.FetchAttributes();
+            var properties = m_Blob.GetProperties();
 
             FileStream fs = new FileStream(m_FileName, FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read);
             ProgressStream pstream = new ProgressStream(fs);
             pstream.ProgressChanged += pstream_ProgressChanged;
-            pstream.SetLength(m_Blob.Properties.Length);
-            m_Blob.ServiceClient.ParallelOperationThreadCount = 10;
-            asyncresult = m_Blob.BeginDownloadToStream(pstream, BlobTransferCompletedCallback, new BlobTransferAsyncState(m_Blob, pstream));
+            pstream.SetLength(properties.Value.ContentLength);
+
+            //var options = new StorageTransferOptions
+            //{
+            //    MaximumConcurrency = 10,
+            //    InitialTransferLength = 0x10000,
+            //    MaximumTransferSize = 0x10000
+            //};
+            var task = m_Blob.DownloadToAsync(pstream, /*null, options,*/ cancellationTokenSource.Token);
+            task.ContinueWith(t => BlobTransferCompleted(t, pstream));
         }
 
         private void pstream_ProgressChanged(object sender, ProgressChangedEventArgs e)
@@ -134,47 +112,25 @@ namespace BlobTransferUtility.Helpers
 
             // raise the progress changed event on the asyncop thread
             eArgs = new BlobTransferProgressChangedEventArgs(e.BytesRead, e.TotalLength, progress, CalculateSpeed(e.BytesRead), null);
-            asyncOp.Post(delegate(object e2) { OnTaskProgressChanged((BlobTransferProgressChangedEventArgs)e2); }, eArgs);
+            OnTaskProgressChanged(eArgs);
         }
 
-        private void BlobTransferCompletedCallback(IAsyncResult result)
+        private void BlobTransferCompleted(Task task, ProgressStream pstream)
         {
-            BlobTransferAsyncState state = (BlobTransferAsyncState)result.AsyncState;
-            ICloudBlob blob = state.Blob;
-            ProgressStream stream = (ProgressStream)state.Stream;
-
             try
             {
-                stream.Close();
-
-                // End the operation.
-                if (TransferType == TransferTypeEnum.Download)
-                    blob.EndDownloadToStream(result);
-                else if (TransferType == TransferTypeEnum.Upload)
-                    blob.EndUploadFromStream(result);
-
-                // Operation completed normally, raise the completed event
-                AsyncCompletedEventArgs completedArgs = new AsyncCompletedEventArgs(null, false, null);
-                asyncOp.PostOperationCompleted(delegate(object e) { OnTaskCompleted((AsyncCompletedEventArgs)e); }, completedArgs);
+                pstream.Close();
             }
-            catch (Microsoft.WindowsAzure.Storage.StorageException ex)
-            {
-                if (!state.Cancelled)
-                {
-                    throw (ex);
-                }
-
-                // Operation was cancelled, raise the event with the cancelled flag = true
-                AsyncCompletedEventArgs completedArgs = new AsyncCompletedEventArgs(null, true, null);
-                asyncOp.PostOperationCompleted(delegate(object e) { OnTaskCompleted((AsyncCompletedEventArgs)e); }, completedArgs);
-            }
+            catch (Exception) { }
+            
+            AsyncCompletedEventArgs completedArgs = new AsyncCompletedEventArgs(task.IsFaulted ? (task.Exception?.InnerException ?? task.Exception) : null, task.IsCanceled, null);
+            OnTaskCompleted(completedArgs);
         }
 
         // Cancel the async download
         public void CancelAsync()
         {
-            ((BlobTransferAsyncState)asyncresult.AsyncState).Cancelled = true;
-            asyncresult.Cancel();
+            cancellationTokenSource.Cancel();
         }
 
         // Helper function to only raise the event if the client has subscribed to it.
@@ -202,12 +158,11 @@ namespace BlobTransferUtility.Helpers
                 bytesQueue.Dequeue();
             }
 
-            timeQueue.Enqueue(System.DateTime.Now.Ticks);
+            timeQueue.Enqueue(DateTime.Now.Ticks);
             bytesQueue.Enqueue(BytesSent);
 
             if (timeQueue.Count > 2)
             {
-                updateTime = System.DateTime.Now;
                 speed = (bytesQueue.Max() - bytesQueue.Min()) / TimeSpan.FromTicks(timeQueue.Max() - timeQueue.Min()).TotalSeconds;
             }
 
@@ -231,65 +186,29 @@ namespace BlobTransferUtility.Helpers
             #region Public Constructor
             public ProgressStream(Stream file)
             {
-                this.stream = file;
-                this.totalLength = file.Length;
-                this.bytesTransferred = 0;
+                stream = file;
+                totalLength = file.Length;
+                bytesTransferred = 0;
             }
             #endregion
 
             #region Public Properties
-            public override bool CanRead
-            {
-                get
-                {
-                    return this.stream.CanRead;
-                }
-            }
+            public override bool CanRead => stream.CanRead;
 
-            public override bool CanSeek
-            {
-                get
-                {
-                    return this.stream.CanSeek;
-                }
-            }
+            public override bool CanSeek => false; // stream.CanSeek;
 
-            public override bool CanWrite
-            {
-                get
-                {
-                    return this.stream.CanWrite;
-                }
-            }
+            public override bool CanWrite => stream.CanWrite;
 
-            public override void Flush()
-            {
-                this.stream.Flush();
-            }
+            public override void Flush() => stream.Flush();
 
-            public override void Close()
-            {
-                this.stream.Close();
-            }
+            public override void Close() => stream.Close();
 
-            public override long Length
-            {
-                get
-                {
-                    return this.stream.Length;
-                }
-            }
+            public override long Length => stream.Length;
 
             public override long Position
             {
-                get
-                {
-                    return this.stream.Position;
-                }
-                set
-                {
-                    this.stream.Position = value;
-                }
+                get => stream.Position;
+                set => stream.Position = value;
             }
             #endregion
 
@@ -303,7 +222,6 @@ namespace BlobTransferUtility.Helpers
                     try
                     {
                         OnProgressChanged(new ProgressChangedEventArgs(bytesTransferred, totalLength));
-                        //ProgressChanged(this, new ProgressChangedEventArgs(bytesTransferred, totalLength));
                     }
                     catch (Exception)
                     {
@@ -319,26 +237,18 @@ namespace BlobTransferUtility.Helpers
                     ProgressChanged(this, e);
             }
 
-            public override long Seek(long offset, SeekOrigin origin)
-            {
-                return this.stream.Seek(offset, origin);
-            }
+            public override long Seek(long offset, SeekOrigin origin) => stream.Seek(offset, origin); //throw new NotSupportedException();
 
-            public override void SetLength(long value)
-            {
-                totalLength = value;
-                //this.stream.SetLength(value);
-            }
+            public override void SetLength(long value) => totalLength = value; //stream.SetLength(value);
 
             public override void Write(byte[] buffer, int offset, int count)
             {
-                this.stream.Write(buffer, offset, count);
+                stream.Write(buffer, offset, count);
                 bytesTransferred += count;
                 {
                     try
                     {
                         OnProgressChanged(new ProgressChangedEventArgs(bytesTransferred, totalLength));
-                        //ProgressChanged(this, new ProgressChangedEventArgs(bytesTransferred, totalLength));
                     }
                     catch (Exception)
                     {
@@ -354,26 +264,6 @@ namespace BlobTransferUtility.Helpers
             }
 
             #endregion
-        }
-
-        private class BlobTransferAsyncState
-        {
-            public ICloudBlob Blob;
-            public Stream Stream;
-            public DateTime Started;
-            public bool Cancelled;
-
-            public BlobTransferAsyncState(ICloudBlob blob, Stream stream)
-                : this(blob, stream, DateTime.Now)
-            { }
-
-            public BlobTransferAsyncState(ICloudBlob blob, Stream stream, DateTime started)
-            {
-                Blob = blob;
-                Stream = stream;
-                Started = started;
-                Cancelled = false;
-            }
         }
 
         private class ProgressChangedEventArgs : EventArgs
@@ -419,12 +309,6 @@ namespace BlobTransferUtility.Helpers
             #endregion
         }
 
-        public enum TransferTypeEnum
-        {
-            Download,
-            Upload
-        }
-
         public class BlobTransferProgressChangedEventArgs : System.ComponentModel.ProgressChangedEventArgs
         {
             private long m_BytesSent = 0;
@@ -463,11 +347,5 @@ namespace BlobTransferUtility.Helpers
                 m_Speed = Speed;
             }
         }
-    }
-
-    public enum TransferTypeEnum
-    {
-        Download,
-        Upload
     }
 }
